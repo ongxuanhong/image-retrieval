@@ -38,28 +38,28 @@ class StreamlitUI:
 
     def display_sidebar(self):
         st.sidebar.title("Search Images")
-        search_input = st.sidebar.text_input(
-            "What would you like to see? (e.g., begin_123)"
-        )
+        # Image uploader
+        uploaded_file = st.sidebar.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
         search_button = st.sidebar.button("Search")
-        return search_input, search_button
+        return uploaded_file, search_button
 
     def display_search_results(self, search_input):
-        st.header("Search Results")
-
         # Cached function to get filtered images
         @st.cache_data(ttl=3600)
         def get_filtered_images(search_input):
-            image_paths = self.db_client.search(image_path=search_input, n_results=5)
+            image_paths = self.db_client.search(image_path=search_input, n_results=100)
             return image_paths
 
         # Get the filtered images from the cached function
         images = get_filtered_images(search_input)
 
         # Create a container for the images
+        st.subheader("Search image")
+        st.image(search_input)
         image_container = st.container()
 
         # Create columns for the grid
+        image_container.subheader("Search Results")
         cols = image_container.columns(4)
 
         # Loop through the filtered images and display them in the columns
@@ -92,6 +92,6 @@ if __name__ == "__main__":
 
     # start streamlit ui
     ui = StreamlitUI(db_client)
-    search_input, search_button = ui.display_sidebar()
-    if search_input or search_button:
-        ui.display_search_results(search_input)
+    uploaded_file, search_button = ui.display_sidebar()
+    if uploaded_file or search_button:
+        ui.display_search_results(uploaded_file)
