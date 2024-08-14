@@ -1,16 +1,17 @@
 import os
-import streamlit as st
+
 import chromadb
-from chromadb.utils.embedding_functions import OpenCLIPEmbeddingFunction
 import numpy as np
+import streamlit as st
 from PIL import Image
+from chromadb.utils.embedding_functions import OpenCLIPEmbeddingFunction
 
 
 class ChromaDBToolkit:
 
     def __init__(self, collection_name) -> None:
         # Create a Chroma Client
-        self.chroma_client = chromadb.Client()
+        self.chroma_client = chromadb.PersistentClient(path="./chromadb/persisted")
         self.embedding_function = OpenCLIPEmbeddingFunction()
         self.collection = self.chroma_client.get_or_create_collection(
             name=collection_name, metadata={"hnsw:space": "cosine"}
@@ -20,16 +21,6 @@ class ChromaDBToolkit:
         embedding = self.embedding_function._encode_image(image=np.array(image))
         return embedding
 
-    def add_embedding(self, files_path):
-        ids = []
-        embeddings = []
-        for id_filepath, filepath in enumerate(files_path):
-            ids.append(f"id_{id_filepath}")
-            image = Image.open(filepath)
-            embedding = self.get_single_image_embedding(image=image)
-            embeddings.append(embedding)
-        self.collection.add(embeddings=embeddings, ids=ids)
-
     def search(self, image_path, n_results):
         query_image = Image.open(image_path)
         query_embedding = self.get_single_image_embedding(query_image)
@@ -38,10 +29,6 @@ class ChromaDBToolkit:
             n_results=n_results,  # how many results to return
         )
         return results
-
-    def indexing(self, files_path):
-        # Create a collection
-        self.add_embedding(files_path=files_path)
 
 
 class StreamlitUI:
@@ -102,7 +89,6 @@ if __name__ == "__main__":
     data_path = f"{ROOT}/train"
     files_path = get_files_path(path=data_path)
     db_client = ChromaDBToolkit("Cosine_collection")
-    db_client.indexing(files_path=files_path)
 
     # start streamlit ui
     ui = StreamlitUI(db_client)
