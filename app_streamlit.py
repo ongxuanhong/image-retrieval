@@ -63,10 +63,10 @@ class StreamlitUI:
         cols = image_container.columns(4)
 
         # Loop through the filtered images and display them in the columns
-        for i, image_url in enumerate(images):
-            # Construct the URL for the image in S3
-            print(image_url)
-            cols[i % 4].image(image_url, use_column_width=True)
+        for i, id_img in enumerate(images["ids"][0]):
+            id_img = int(id_img.split("_")[-1])
+            img_path = files_path[id_img]
+            cols[i % 4].image(img_path, use_column_width=True)
 
 
 def get_files_path(path):
